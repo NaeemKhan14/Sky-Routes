@@ -13,7 +13,7 @@ public class SkyRoutes implements IRoutes {
 		
 		directCost = new DirectFlightsAndLeastCost();
 		directCost.addGraphVertex();
-		directCost.addGraphEdge();
+		directCost.addGraphEdges();
 		
 		System.out.println("The following airports are used:");
 		
