@@ -1,39 +1,48 @@
 package F28DA_CW2;
 
-import org.jgrapht.GraphPath;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import java.io.FileNotFoundException;
+import java.util.HashSet;
 
 public class hello {
-	public static void pr() {
-		SimpleDirectedWeightedGraph<String, DefaultWeightedEdge> simpleGraph = new SimpleDirectedWeightedGraph<String, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+	public static void a() throws FileNotFoundException, SkyRoutesException {
+		FlightsReader f = new FlightsReader(FlightsReader.MOREAIRLINECODES);
 		
-		simpleGraph.addVertex("Edinburgh");
-		simpleGraph.addVertex("Dubai");
-		simpleGraph.addVertex("Sydney");
-		simpleGraph.addVertex("Heathrow");
-		simpleGraph.addVertex("Kuala Lumpur");
+		HashSet<String[]> airlines = f.getAirlines();
+		String result = "";
 		
-		DefaultWeightedEdge e1 = simpleGraph.addEdge("Edinburgh", "Heathrow");
-		DefaultWeightedEdge e2 = simpleGraph.addEdge("Heathrow", "Dubai");
-		DefaultWeightedEdge e3 = simpleGraph.addEdge("Heathrow", "Sydney");
-		DefaultWeightedEdge e4 = simpleGraph.addEdge("Dubai", "Kuala Lumpur");
-		DefaultWeightedEdge e5 = simpleGraph.addEdge("Dubai", "Edinburgh");
-		DefaultWeightedEdge e6 = simpleGraph.addEdge("Kuala Lumpur", "Sydney");
+		for(String[] s : airlines) {
+			for(int i = 0; i < s.length; i++) {
+				result += s[i] + " ";
+			}
+			result += "\n";
+		}
 		
-		simpleGraph.setEdgeWeight(e1, 80);
-		simpleGraph.setEdgeWeight(e2, 130);
-		simpleGraph.setEdgeWeight(e3, 570);
-		simpleGraph.setEdgeWeight(e4, 170);
-		simpleGraph.setEdgeWeight(e5, 190);
-		simpleGraph.setEdgeWeight(e6, 150);
+		//System.out.println(result);
 		
-		GraphPath<String, DefaultWeightedEdge> d = DijkstraShortestPath.findPathBetween(simpleGraph, "Dubai", "Sydney");
+		HashSet<String[]> airports = f.getAirports();
+		String resultAirports = "";
 		
-		System.out.println(d);
+		for(String[] s : airports) {
+			for(int i = 0; i < s.length; i++) {
+				resultAirports += s[i] + " ";
+			}
+			resultAirports += "\n";
+		}
+		//System.out.println(resultAirports);
+		
+		HashSet<String[]> flights = f.getFlights();
+		String resultFlights = "";
+		
+		for(String[] s : flights) {
+			for(int i = 0; i < s.length; i++) {
+				resultFlights += s[i] + " ";
+			}
+			resultFlights += "\n";
+		}
+		System.out.println(resultFlights);
+		
 	}
-	public static void main(String[] args) {
-		pr();
+	public static void main(String[] args) throws FileNotFoundException, SkyRoutesException {
+		a();
 	}
 }
