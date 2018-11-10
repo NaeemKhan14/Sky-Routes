@@ -1,13 +1,32 @@
 package F28DA_CW2;
 
+import java.io.FileNotFoundException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 
 public class SkyRoutes implements IRoutes {
 
 	private static DirectFlightsAndLeastCost directCost;
+	private static FlightsReader flightsReader;
+	private static SimpleDirectedWeightedGraph<String, FlightsInfo> graph;
+	private static HashMap<String, String> airlineNames;
+	
+	public SkyRoutes() {
+		graph = new SimpleDirectedWeightedGraph<String, FlightsInfo>(FlightsInfo.class);
+		airlineNames = new HashMap<String, String>();
+		try {
+			flightsReader = new FlightsReader(FlightsReader.MOREAIRLINECODES);
+		} catch (FileNotFoundException | SkyRoutesException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public static void partA() {
 		
@@ -34,7 +53,17 @@ public class SkyRoutes implements IRoutes {
 	}
 
 	public static void partB() {
-		// TO IMPLEMENT
+		
+		IRoutes s = new SkyRoutes();
+		s.populate(flightsReader.getAirlines(), flightsReader.getAirports(), flightsReader.getFlights());
+		
+		GraphPath<String, FlightsInfo> shortestPath = DijkstraShortestPath.findPathBetween(graph, "EDI", "SYD");
+		
+		for(int i = 0; i < shortestPath.getEdgeList().size(); i++) {
+			System.out.println(shortestPath.getEdgeList().get(i));
+		}
+		
+		System.out.println(shortestPath.getWeight());
 	}
 
 	public static void partC() {
@@ -42,13 +71,30 @@ public class SkyRoutes implements IRoutes {
 	}
 
 	public static void main(String[] args) {
-		partA();
+		partB();
+		
 	}
 
 	@Override
 	public boolean populate(HashSet<String[]> airlines, HashSet<String[]> airports, HashSet<String[]> routes) {
-		// TODO Auto-generated method stub
-		return false;
+
+		for(String[] airportsList : airports) {
+			for(int i = 0; i < airportsList.length; i+=3) {
+				airlineNames.put(airportsList[0], airportsList[1]);
+				graph.addVertex(airportsList[i]);
+			}
+		}
+		
+		for(String[] flightsInfo : routes) {
+			for(int i = 0; i < flightsInfo.length; i++) {
+				FlightsInfo flightData = new FlightsInfo(flightsInfo[0], airlineNames.get(flightsInfo[1]), flightsInfo[2], airlineNames.get(flightsInfo[3]), flightsInfo[4]);
+				graph.addEdge(flightsInfo[1], flightsInfo[3], flightData);
+				graph.setEdgeWeight(flightData, (int) Double.parseDouble(flightsInfo[5]));
+			}
+		}
+		
+		// FIX THIS!!!!!!!
+		return true;
 	}
 
 	@Override
