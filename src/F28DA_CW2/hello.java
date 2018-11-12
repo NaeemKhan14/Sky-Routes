@@ -32,8 +32,9 @@ public class hello {
 		}
 
 		GraphPath<String, FlightsInfo> shortestPath = DijkstraShortestPath.findPathBetween(m, "EDI", "SYD");
-		System.out.println(shortestPath);
+		for(FlightsInfo s : shortestPath.getEdgeList()) {
+			System.out.println(s);
+		}
 		System.out.println(shortestPath.getWeight());
-		System.out.println(airLines.get("Edinburgh"));
 	}
 }
