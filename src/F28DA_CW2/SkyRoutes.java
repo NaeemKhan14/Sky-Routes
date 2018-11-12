@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 
-import org.jgrapht.GraphPath;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 
@@ -17,6 +15,7 @@ public class SkyRoutes implements IRoutes {
 	private static FlightsReader flightsReader;
 	private static SimpleDirectedWeightedGraph<String, FlightsInfo> graph;
 	private static HashMap<String, String> airlineNames;
+	private static Routes flightsList;
 	
 	public SkyRoutes() {
 		graph = new SimpleDirectedWeightedGraph<String, FlightsInfo>(FlightsInfo.class);
@@ -54,16 +53,24 @@ public class SkyRoutes implements IRoutes {
 
 	public static void partB() {
 		
-		IRoutes s = new SkyRoutes();
-		s.populate(flightsReader.getAirlines(), flightsReader.getAirports(), flightsReader.getFlights());
+		IRoutes skyRoutes = new SkyRoutes();
+		skyRoutes.populate(flightsReader.getAirlines(), flightsReader.getAirports(), flightsReader.getFlights());
 		
-		GraphPath<String, FlightsInfo> shortestPath = DijkstraShortestPath.findPathBetween(graph, "EDI", "SYD");
+		Scanner scan = new Scanner(System.in);
+		System.out.println("Please enter the start airport");
+		String start = scan.next().toUpperCase();
 		
-		for(int i = 0; i < shortestPath.getEdgeList().size(); i++) {
-			System.out.println(shortestPath.getEdgeList().get(i));
+		System.out.println("Please enter the destination airport");
+		String end = scan.next().toUpperCase();
+		scan.close();
+		
+		try {
+			IRoute travelInfo = skyRoutes.leastCost(start, end);
+			flightsList.display(travelInfo);
+		} catch (SkyRoutesException e) {
+			e.printStackTrace();
 		}
 		
-		System.out.println(shortestPath.getWeight());
 	}
 
 	public static void partC() {
@@ -75,15 +82,29 @@ public class SkyRoutes implements IRoutes {
 		
 	}
 
+	/**
+	 * Returns a cheapest flight route from one airport (airport code) to another
+	 *
+	 * This method has implemented HashMap to map the airport names
+	 * with their airport codes. This helps in getting the names for
+	 * the desired airport using its code (i.e. DXB for Dubai)
+	 */
+	
 	@Override
 	public boolean populate(HashSet<String[]> airlines, HashSet<String[]> airports, HashSet<String[]> routes) {
-
+		
+		// Get the airports data and all the airport codes as vertices
 		for(String[] airportsList : airports) {
 			for(int i = 0; i < airportsList.length; i+=3) {
-				airlineNames.put(airportsList[0], airportsList[1]);
+				airlineNames.put(airportsList[0], airportsList[1]); // Put airport codes as keys, and airport names as their values
 				graph.addVertex(airportsList[i]);
 			}
 		}
+		
+		/*
+		 * Get the flights data from flights database and add them to edges
+		 * with their relevant information
+		 */
 		
 		for(String[] flightsInfo : routes) {
 			for(int i = 0; i < flightsInfo.length; i++) {
@@ -97,9 +118,10 @@ public class SkyRoutes implements IRoutes {
 		return true;
 	}
 
+	
 	@Override
 	public IRoute leastCost(String from, String to) throws SkyRoutesException {
-		return null;
+		return flightsList = new Routes(graph, from, to);
 	}
 
 	@Override
