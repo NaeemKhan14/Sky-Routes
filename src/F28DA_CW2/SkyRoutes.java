@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 
@@ -58,15 +57,17 @@ public class SkyRoutes implements IRoutes {
 		
 		Scanner scan = new Scanner(System.in);
 		System.out.println("Please enter the start airport");
-		String start = scan.next().toUpperCase();
+		String start = formatString(scan.next().split(" "));
 		
 		System.out.println("Please enter the destination airport");
-		String end = scan.next().toUpperCase();
+		String end = formatString(scan.next().split(" "));
 		scan.close();
 		
+		System.out.println("Route for " + start + " to " + end);
 		try {
+			@SuppressWarnings("unused")
 			IRoute travelInfo = skyRoutes.leastCost(start, end);
-			flightsList.display(travelInfo);
+			flightsList.display();
 		} catch (SkyRoutesException e) {
 			e.printStackTrace();
 		}
@@ -81,9 +82,42 @@ public class SkyRoutes implements IRoutes {
 		partB();
 		
 	}
+	
+	/**
+	 * This method converts the user input to match the vertices in our graph
+	 * In case malformed String input is given, like combination of lower and
+	 * upper case letters, this will convert it into a String which is 
+	 * compatible with our graph
+	 * 
+	 * @param word The array of words
+	 * @return A single formatted string
+	 */
+	
+	public static String formatString(String[] word) {
+		
+		String result = "";
+		
+		for(int i = 0; i < word.length; i++) {
+			/*Get the first letter of the word, convert it into uppercase, and change the rest of the words
+			to lower case.*/
+			result += word[i].substring(0, 1).toUpperCase() + word[i].substring(1, word[i].length()).toLowerCase();
+			/*
+			 * If the array has more than one values, that means there is a space between the word. In which
+			 * case we add a space after each word we check in the word array only if it is not the final 
+			 * value in the word array (that would mean it's the final word and we do not want space in the
+			 * end of the word).
+			 */
+			if(word.length > 1 && i < word.length-1) {
+				result += " ";
+			}
+		}
+
+		return result;
+	}
 
 	/**
-	 * Returns a cheapest flight route from one airport (airport code) to another
+	 * Populates the graph with the airlines, airports and flights information.
+	 * Returns true if the operation was successful.
 	 *
 	 * This method has implemented HashMap to map the airport names
 	 * with their airport codes. This helps in getting the names for
@@ -92,13 +126,11 @@ public class SkyRoutes implements IRoutes {
 	
 	@Override
 	public boolean populate(HashSet<String[]> airlines, HashSet<String[]> airports, HashSet<String[]> routes) {
-		
+
 		// Get the airports data and all the airport codes as vertices
 		for(String[] airportsList : airports) {
-			for(int i = 0; i < airportsList.length; i+=3) {
-				airlineNames.put(airportsList[0], airportsList[1]); // Put airport codes as keys, and airport names as their values
-				graph.addVertex(airportsList[i]);
-			}
+			airlineNames.put(airportsList[0], airportsList[1]); // Put airport names as keys, and airport codes as their values
+			graph.addVertex(airportsList[1]); // Add the airport names as vertices
 		}
 		
 		/*
@@ -107,11 +139,9 @@ public class SkyRoutes implements IRoutes {
 		 */
 		
 		for(String[] flightsInfo : routes) {
-			for(int i = 0; i < flightsInfo.length; i++) {
-				FlightsInfo flightData = new FlightsInfo(flightsInfo[0], airlineNames.get(flightsInfo[1]), flightsInfo[2], airlineNames.get(flightsInfo[3]), flightsInfo[4]);
-				graph.addEdge(flightsInfo[1], flightsInfo[3], flightData);
-				graph.setEdgeWeight(flightData, (int) Double.parseDouble(flightsInfo[5]));
-			}
+			FlightsInfo flightData = new FlightsInfo(flightsInfo[0], airlineNames.get(flightsInfo[1]), flightsInfo[2], airlineNames.get(flightsInfo[3]), flightsInfo[4]);
+			graph.addEdge(airlineNames.get(flightsInfo[1]), airlineNames.get(flightsInfo[3]), flightData);
+			graph.setEdgeWeight(flightData, (int) Double.parseDouble(flightsInfo[5]));
 		}
 		
 		// FIX THIS!!!!!!!
