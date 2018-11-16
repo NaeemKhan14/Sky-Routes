@@ -23,7 +23,6 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 public class Routes implements IRoute {
 	
 	private GraphPath<String, FlightsInfo> shortestPath;
-	private int totalCost;
 	DateTimeFormatter dateFormat;
 	
 	/**
@@ -37,7 +36,6 @@ public class Routes implements IRoute {
 	
 	public Routes(SimpleDirectedWeightedGraph<String, FlightsInfo> graph, String from, String to) {
 		shortestPath = DijkstraShortestPath.findPathBetween(graph, from, to);
-		totalCost = (int) shortestPath.getWeight();
 		dateFormat = DateTimeFormatter.ofPattern("HHmm");
 	}
 
@@ -53,8 +51,8 @@ public class Routes implements IRoute {
 	public List<String> getFlights() {
 		List<String> flightsList = new ArrayList<String>();
 		
-		for(int i = 0; i < shortestPath.getEdgeList().size(); i++) {		
-			flightsList.add(shortestPath.getEdgeList().get(i).toString());
+		for(String[] data : getEdgeData()) {
+			flightsList.add(data[2]);
 		}
 		
 		return flightsList;
@@ -66,25 +64,16 @@ public class Routes implements IRoute {
 	 * @throws SkyRoutesException
 	 */
 	
-	public void display(IRoute travelInfo) throws SkyRoutesException {
+	public void display() throws SkyRoutesException {
 		
-		System.out.println("Route for Edinburgh to Sydney");
-		System.out.println("Leg   Leave  At     On     Arrive     At");
+		System.out.println(String.format("%1$-5s %2$-15s %3$-5s %4$-10s %5$-15s %6$s", "leg", "leave", "At", "On", "Arrive", "At"));
+		
 		int count = 1;
 		
-		for(String res : travelInfo.getFlights()) {
-			String[] result = res.split(":");
-			System.out.print(count++ + " ");
-			for(int i = 0; i < result.length; i++) {
-				if(i == result.length-1) {
-					System.out.println(result[i]);
-				} else {
-					System.out.print(result[i] + ", ");
-				}
-				
-			}
+		for(String[] result : getEdgeData()) {
+			System.out.println(String.format("%1$-5d %2$-15s %3$-5s %4$-10s %5$-15s %6$s", count++, result[0], result[1], result[2], result[3], result[4]));
 		}
-		System.out.println("Total Journey Cost = £" + travelInfo.totalCost());
+		System.out.println("Total Journey Cost = £" + totalCost());
 		System.out.println("Total Time in the Air = " + totalTime() + " minutes");
 	}
 	
@@ -95,7 +84,7 @@ public class Routes implements IRoute {
 	}
 	@Override
 	public int totalCost() {
-		return totalCost;
+		return (int) shortestPath.getWeight();
 	}
 	
 	// Reference: https://stackoverflow.com/questions/28353725/java-subtract-localtime
