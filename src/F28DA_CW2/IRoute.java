@@ -4,6 +4,8 @@ import java.util.List;
 
 public interface IRoute {
 
+	List<String[]> getEdgeData();
+	
 	/** Returns the list of airports codes composing the route */
 	List<String> getStops();
 	
@@ -24,4 +26,5 @@ public interface IRoute {
 	
 	/** Returns the total travel time of the route */
 	int totalTime();
+	
 }
