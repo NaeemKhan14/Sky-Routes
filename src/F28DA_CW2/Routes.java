@@ -1,6 +1,3 @@
-/**
- * 
- */
 package F28DA_CW2;
 
 import java.time.LocalTime;
@@ -23,7 +20,7 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 public class Routes implements IRoute {
 	
 	private GraphPath<String, FlightsInfo> shortestPath;
-	DateTimeFormatter dateFormat;
+	private DateTimeFormatter dateFormat;
 	
 	/**
 	 * Constructor of this class which finds the shortest path for our
@@ -35,14 +32,28 @@ public class Routes implements IRoute {
 	 */
 	
 	public Routes(SimpleDirectedWeightedGraph<String, FlightsInfo> graph, String from, String to) {
-		shortestPath = DijkstraShortestPath.findPathBetween(graph, from, to);
-		dateFormat = DateTimeFormatter.ofPattern("HHmm");
+		DijkstraShortestPath<String, FlightsInfo> shortestPathGraph = new DijkstraShortestPath<String, FlightsInfo>(graph);
+		shortestPath = shortestPathGraph.getPath(from, to);
+		dateFormat = DateTimeFormatter.ofPattern("HHmm");	
 	}
 
+	/** Returns the list of airports codes composing the route */
+	
 	@Override
 	public List<String> getStops() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		List<String> airportsList = new ArrayList<String>();
+		
+		for(String[] data : getEdgeData()) {
+			if(!airportsList.contains(data[0])) {
+				airportsList.add(data[0]);
+			}
+			if(!airportsList.contains(data[3])) {
+				airportsList.add(data[3]);
+			}
+		}
+		
+		return airportsList;
 	}
 	
 	/** Returns the list of airports codes composing the route */
@@ -58,29 +69,9 @@ public class Routes implements IRoute {
 		return flightsList;
 	}
 	
-	/**
-	 * Takes the shortest path and prints the result in our desired format
-	 * @param travelInfo Shortest path to destination from our graph edges
-	 * @throws SkyRoutesException
-	 */
-	
-	public void display() throws SkyRoutesException {
-		
-		System.out.println(String.format("%1$-5s %2$-15s %3$-5s %4$-10s %5$-15s %6$s", "leg", "leave", "At", "On", "Arrive", "At"));
-		
-		int count = 1;
-		
-		for(String[] result : getEdgeData()) {
-			System.out.println(String.format("%1$-5d %2$-15s %3$-5s %4$-10s %5$-15s %6$s", count++, result[0], result[1], result[2], result[3], result[4]));
-		}
-		System.out.println("Total Journey Cost = £" + totalCost());
-		System.out.println("Total Time in the Air = " + totalTime() + " minutes");
-	}
-	
 	@Override
 	public int totalHop() {
-		// TODO Auto-generated method stub
-		return 0;
+		return getEdgeData().size();
 	}
 	@Override
 	public int totalCost() {
@@ -104,59 +95,42 @@ public class Routes implements IRoute {
 		
 		for(String[] flightData : getEdgeData()) {
 			LocalTime departureTime = LocalTime.parse(flightData[1], dateFormat);
-			LocalTime arrivalTime = LocalTime.parse(flightData[4], dateFormat);
-			
+			LocalTime arrivalTime = LocalTime.parse(flightData[4], dateFormat);		
 			/*
 			 * If the value we get from comparing the difference between two times is
 			 * below 0 (i.e. difference between 1400 -> 0900 gives us a negative because 
 			 * LocalTime() cannot differentiate between day changes). In which case we add
 			 * a whole day to our result to get the correct value. The code below does that.
-			 */
-			
+			 */			
 			result += (MINUTES.between(departureTime, arrivalTime) + 1440) % 1440;
 		}
-
 		
 		return result;
 	}
+	
+	/** Returns the total time in connection of the route */
+	
 	@Override
 	public int connectingTime() {
-		// TODO Auto-generated method stub
-		return 0;
+		int result = 0;
+		
+		for(int i = 0; i < getEdgeData().size()-1; i++) {
+			LocalTime arrivalTime = LocalTime.parse(getEdgeData().get(i)[4], dateFormat);
+			LocalTime departureTime = LocalTime.parse(getEdgeData().get(i+1)[1], dateFormat);
+			
+			result += (MINUTES.between(arrivalTime, departureTime) + 1440) % 1440;
+		}
+	
+		return result;
 	}
 	
-	// Reference: https://stackoverflow.com/questions/28353725/java-subtract-localtime
-	// Reference: https://stackoverflow.com/questions/53254475/localtime-difference-between-two-times
-	
 	/** 
-	 * This method takes the departure and arrival time of each flight from the
-	 * flight data, and calculates the amount of time spent on the journey
-	 * 
 	 * @return total number of minutes spent on the journey
 	 */
 	
 	@Override
-	public int totalTime() {
-		
-		int result = 0;
-		
-		for(String[] flightData : getEdgeData()) {
-			LocalTime departureTime = LocalTime.parse(flightData[1], dateFormat);
-			LocalTime arrivalTime = LocalTime.parse(flightData[4], dateFormat);
-			LocalTime interval = arrivalTime;
-			
-			if(result == 0) {
-				// If it's the first value, just add the difference between departure and arrival time of that flight
-				result += (MINUTES.between(departureTime, arrivalTime) + 1440) % 1440;
-			} else {
-				// This algorithm is explained above in airTime() method
-				result += (MINUTES.between(interval, departureTime) + 1440) % 1440;
-				result += (MINUTES.between(departureTime, arrivalTime) + 1440) % 1440;
-			}
-			
-		}
-		
-		return result;
+	public int totalTime() {	
+		return airTime() + connectingTime();
 	}
 	
 	/**
@@ -166,7 +140,8 @@ public class Routes implements IRoute {
 	 * @return List of all the data of each connection flight (i.e. graph edge)
 	 */
 	
-	private List<String[]> getEdgeData() {
+	@Override
+	public List<String[]> getEdgeData() {
 		
 		List<String[]> edgeData = new ArrayList<String[]>();
 		
