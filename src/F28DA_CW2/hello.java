@@ -1,7 +1,9 @@
 package F28DA_CW2;
 
 import java.io.FileNotFoundException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
@@ -11,30 +13,28 @@ public class hello {
 	
 	public static void main(String[] args) throws FileNotFoundException, SkyRoutesException {
 		
-		SimpleDirectedWeightedGraph<String, FlightsInfo> m = new SimpleDirectedWeightedGraph<String, FlightsInfo>(FlightsInfo.class);
-		
-		FlightsReader fr = new FlightsReader(FlightsReader.MOREAIRLINECODES);
-		HashMap<String, String> airLines = new HashMap<String, String>();
-		
-		for(String[] s : fr.getAirports()) {
-			for(int i = 0; i < s.length; i+=3) {
-				airLines.put(s[0], s[1]);
-				m.addVertex(s[i]);
-			}
-		}
-		
-		for(String[] s : fr.getFlights()) {
-			for(int i = 0; i < s.length; i++) {
-				FlightsInfo f = new FlightsInfo(s[0], airLines.get(s[1]), s[2], airLines.get(s[3]), s[4]);
-				m.addEdge(s[1], s[3], f);
-				m.setEdgeWeight(f, (int) Double.parseDouble(s[5]));
-			}
-		}
+		FlightsReader f = new FlightsReader(FlightsReader.AIRLINECODES);
 
-		GraphPath<String, FlightsInfo> shortestPath = DijkstraShortestPath.findPathBetween(m, "EDI", "SYD");
-		for(FlightsInfo s : shortestPath.getEdgeList()) {
-			System.out.println(s);
+		SimpleDirectedWeightedGraph<String, FlightsInfo> s = new SimpleDirectedWeightedGraph<String, FlightsInfo>(FlightsInfo.class);
+		
+		for(String[] airports : f.getAirports()) {
+			s.addVertex(airports[0]);
+		
 		}
-		System.out.println(shortestPath.getWeight());
+		
+		for(String[] flightsInfo : f.getFlights()) {
+			s.addEdge(flightsInfo[1], flightsInfo[3], new FlightsInfo(flightsInfo[0], flightsInfo[1], flightsInfo[2], flightsInfo[3], flightsInfo[4]));
+			s.setEdgeWeight(s.getEdge(flightsInfo[1], flightsInfo[3]), Integer.parseInt(flightsInfo[5]));
+		}
+		
+		DijkstraShortestPath<String, FlightsInfo> d = new DijkstraShortestPath<>(s);
+//		List<String> l = new ArrayList<String>();
+//		l.add("IST");
+//		l.add("SIN");
+//		
+//		System.out.println(s.removeAllEdges(s.edgesOf("IST")));
+		GraphPath<String, FlightsInfo> g = d.getPath("EDI", "DXB");
+		System.out.println((int) g.getWeight());
+		
 	}
 }
