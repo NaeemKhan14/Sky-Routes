@@ -1,6 +1,3 @@
-/**
- * 
- */
 package F28DA_CW2;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
