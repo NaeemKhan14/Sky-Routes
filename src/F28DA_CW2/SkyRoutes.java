@@ -1,10 +1,12 @@
 package F28DA_CW2;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 
@@ -13,12 +15,11 @@ public class SkyRoutes implements IRoutes {
 	private static DirectFlightsAndLeastCost directCost;
 	private static FlightsReader flightsReader;
 	private static SimpleDirectedWeightedGraph<String, FlightsInfo> graph;
-	private static HashMap<String, String> airlineNames;
-	private static Routes flightsList;
+	private static HashMap<String, String> airportNames;
 	
 	public SkyRoutes() {
 		graph = new SimpleDirectedWeightedGraph<String, FlightsInfo>(FlightsInfo.class);
-		airlineNames = new HashMap<String, String>();
+		airportNames = new HashMap<String, String>();
 		try {
 			flightsReader = new FlightsReader(FlightsReader.MOREAIRLINECODES);
 		} catch (FileNotFoundException | SkyRoutesException e) {
@@ -57,62 +58,71 @@ public class SkyRoutes implements IRoutes {
 		
 		Scanner scan = new Scanner(System.in);
 		System.out.println("Please enter the start airport");
-		String start = formatString(scan.next().split(" "));
+		String start = scan.next().toUpperCase();
 		
 		System.out.println("Please enter the destination airport");
-		String end = formatString(scan.next().split(" "));
+		String end = scan.next().toUpperCase();
 		scan.close();
 		
-		System.out.println("Route for " + start + " to " + end);
+		System.out.println("Route for " + airportNames.get(start) + " to " + airportNames.get(end));
 		try {
-			@SuppressWarnings("unused")
 			IRoute travelInfo = skyRoutes.leastCost(start, end);
-			flightsList.display();
+			System.out.println(String.format("%1$-5s %2$-15s %3$-5s %4$-10s %5$-15s %6$s", "leg", "leave", "At", "On", "Arrive", "At"));
+			
+			int count = 1;
+			
+			for(String[] result : travelInfo.getEdgeData()) {
+				System.out.println(String.format("%1$-5d %2$-15s %3$-5s %4$-10s %5$-15s %6$s", count++, 
+						airportNames.get(result[0]), result[1], result[2], airportNames.get(result[3]), result[4]));
+			}
+			System.out.println("Total Journey Cost = £" + travelInfo.totalCost());
+			System.out.println("Total travel time = " + travelInfo.totalTime() + " minutes");
+		} catch (SkyRoutesException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public static void partC() {
+		IRoutes skyRoutes = new SkyRoutes();
+		skyRoutes.populate(flightsReader.getAirlines(), flightsReader.getAirports(), flightsReader.getFlights());
+		
+		Scanner scan = new Scanner(System.in);
+		System.out.println("Please enter the start airport");
+		String start = scan.next().toUpperCase();
+		
+		System.out.println("Please enter the destination airport");
+		String end = scan.next().toUpperCase();
+		scan.close();
+		
+		System.out.println("Route for " + airportNames.get(start) + " to " + airportNames.get(end));
+		try {
+			List<String> exclusionList = new ArrayList<String>();
+			exclusionList.add("LHR");
+			exclusionList.add("BKK");
+			IRoute travelInfo = skyRoutes.leastCost(start, end, exclusionList);
+			System.out.println(String.format("%1$-5s %2$-15s %3$-5s %4$-10s %5$-15s %6$s", "leg", "leave", "At", "On", "Arrive", "At"));
+			
+			int count = 1;
+			
+			for(String[] result : travelInfo.getEdgeData()) {
+				System.out.println(String.format("%1$-5d %2$-15s %3$-5s %4$-10s %5$-15s %6$s", count++, 
+						result[0], result[1], result[2], result[3], result[4]));
+			}
+			System.out.println("Total Journey Cost = £" + travelInfo.totalCost());
+			System.out.println("Total Number of Connections: " + travelInfo.totalHop());
+			System.out.println("Total Time in Air: " + travelInfo.airTime() + " Minutes");
+			System.out.println("Total Time Spent Waiting: " + travelInfo.connectingTime() + " Minutes");
+			System.out.println("Total travel time = " + travelInfo.totalTime() + " Minutes");
 		} catch (SkyRoutesException e) {
 			e.printStackTrace();
 		}
 		
 	}
 
-	public static void partC() {
-		// TO IMPLEMENT
-	}
-
 	public static void main(String[] args) {
-		partB();
+		partC();
 		
-	}
-	
-	/**
-	 * This method converts the user input to match the vertices in our graph
-	 * In case malformed String input is given, like combination of lower and
-	 * upper case letters, this will convert it into a String which is 
-	 * compatible with our graph
-	 * 
-	 * @param word The array of words
-	 * @return A single formatted string
-	 */
-	
-	public static String formatString(String[] word) {
-		
-		String result = "";
-		
-		for(int i = 0; i < word.length; i++) {
-			/*Get the first letter of the word, convert it into uppercase, and change the rest of the words
-			to lower case.*/
-			result += word[i].substring(0, 1).toUpperCase() + word[i].substring(1, word[i].length()).toLowerCase();
-			/*
-			 * If the array has more than one values, that means there is a space between the word. In which
-			 * case we add a space after each word we check in the word array only if it is not the final 
-			 * value in the word array (that would mean it's the final word and we do not want space in the
-			 * end of the word).
-			 */
-			if(word.length > 1 && i < word.length-1) {
-				result += " ";
-			}
-		}
-
-		return result;
 	}
 
 	/**
@@ -129,8 +139,8 @@ public class SkyRoutes implements IRoutes {
 
 		// Get the airports data and all the airport codes as vertices
 		for(String[] airportsList : airports) {
-			airlineNames.put(airportsList[0], airportsList[1]); // Put airport names as keys, and airport codes as their values
-			graph.addVertex(airportsList[1]); // Add the airport names as vertices
+			airportNames.put(airportsList[0], airportsList[1]); // Put airport codes as keys, and airport names as their values
+			graph.addVertex(airportsList[0]); // Add the airport names as vertices
 		}
 		
 		/*
@@ -139,31 +149,32 @@ public class SkyRoutes implements IRoutes {
 		 */
 		
 		for(String[] flightsInfo : routes) {
-			FlightsInfo flightData = new FlightsInfo(flightsInfo[0], airlineNames.get(flightsInfo[1]), flightsInfo[2], airlineNames.get(flightsInfo[3]), flightsInfo[4]);
-			graph.addEdge(airlineNames.get(flightsInfo[1]), airlineNames.get(flightsInfo[3]), flightData);
-			graph.setEdgeWeight(flightData, (int) Double.parseDouble(flightsInfo[5]));
+			graph.addEdge(flightsInfo[1], flightsInfo[3], new FlightsInfo(flightsInfo[0], flightsInfo[1], flightsInfo[2], flightsInfo[3], flightsInfo[4]));
+			graph.setEdgeWeight(graph.getEdge(flightsInfo[1], flightsInfo[3]), Integer.parseInt(flightsInfo[5]));
 		}
 		
 		// FIX THIS!!!!!!!
 		return true;
 	}
 
-	
 	@Override
 	public IRoute leastCost(String from, String to) throws SkyRoutesException {
-		return flightsList = new Routes(graph, from, to);
+		return new Routes(graph, from, to);
 	}
 
 	@Override
 	public IRoute leastHop(String from, String to) throws SkyRoutesException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public IRoute leastCost(String from, String to, List<String> excluding) throws SkyRoutesException {
 		
-		return null;
+		for(String airportCodes: excluding) {
+			graph.removeAllEdges(graph.edgesOf(airportCodes));
+		}
+		
+		return new Routes(graph, from, to);
 	}
 
 	@Override
