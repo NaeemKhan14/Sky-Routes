@@ -4,8 +4,6 @@ import java.util.List;
 
 public interface IRoute {
 
-	List<String[]> getEdgeData();
-	
 	/** Returns the list of airports codes composing the route */
 	List<String> getStops();
 	
